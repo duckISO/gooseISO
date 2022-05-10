@@ -10,4 +10,4 @@ Maybe someone could find it useful, maybe someone could steal something from her
 This is temporary pretty much, until duckISO is finished and there's an easy to use utility.
 
 ### Credits
-- [AtlasOS](https://github.com/Atlas-OS/Atlas) - Basically just a fork of Atlas with my own stuff.
+- [AtlasOS](https://github.com/Atlas-OS/Atlas) - gooseISO basically just a fork of Atlas with my own stuff.

@@ -1,0 +1,2 @@
+ActiveProbing intermittently pings Microsoft's Servers to check for a network connection.
+It may cause the network icon to display a disconnected icon while you still have a stable connection if it is disabled.

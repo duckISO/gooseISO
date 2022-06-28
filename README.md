@@ -4,9 +4,9 @@
 </h1>
 
 <p align="center">
-  <a href="https://github.com/he3als/gooseISO/src">Source code/building</a>
+  <a href="https://github.com/he3als/gooseISO/tree/main/src">Source code/building</a>
   ·
-  <a href="https://github.com/he3als/gooseISO/src/GooseModules">Hashes of binaries</a>
+  <a href="https://github.com/he3als/gooseISO/tree/main/src/GooseModules">Hashes of binaries</a>
 </p>
 
 My personal presets and scripts to modify Windows 11 with NTLite for performance and privacy. GooseISO is a fork of [AtlasOS](https://github.com/Atlas-OS/Atlas). It is focused on being a long term installation, with not a lot of items stripped (mostly UWP bloat is stripped), causing less issues in the future as you can re-enable what you have disabled.

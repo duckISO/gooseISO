@@ -18,7 +18,7 @@ My personal presets and scripts to modify Windows 11 with NTLite for performance
   - Couldn't strip it easily with free NTLite, plus it is nice to have an included web browser
 
 ### There are no ISOs provided
-If you want to use this, [build it yourself](https://github.com/he3als/gooseISO/src). This is to avoid noobs using it and asking for help with simple things that they shouldn't need help for if they are knowingly using a custom ISO.
+If you want to use this, [build it yourself](https://github.com/he3als/gooseISO/tree/main/src/GooseModules). This is to avoid noobs using it and asking for help with simple things that they shouldn't need help for if they are knowingly using a custom ISO.
 
 ### Credits
 - [AtlasOS](https://github.com/Atlas-OS/Atlas) - gooseISO a fork of Atlas - it wouldn't be able to be made without it

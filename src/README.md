@@ -15,9 +15,9 @@ There are plenty of reasons to build gooseISO from source such as:
 
 ### Prerequisites
 - NTLite free or above (preset is only made in the free version)
-- An archive extractor (7-Zip... it is illegal to use gooseISO if you use WinRaR and especialy WinZip)
-- A local copy of the Atlas repository
-- A Default Windows Build from Microsoft ([1](https://tb.rg-adguard.net/) [2](https://www.heidoc.net/joomla/technology-science/microsoft/67-microsoft-windows-iso-download-tool) [3](https://uupdump.net/known.php?q=19042.631))
+- An archive extractor (7-Zip... it is illegal to use gooseISO if you use WinRaR and especially WinZip)
+- A local copy of the gooseISO repository
+- A Windows 11 Enterprise ISO ([get it here](https://www.microsoft.com/en-us/evalcenter/download-windows-11-enterprise))
 
 ### Getting Started
 1. Extract the Windows build using the previously mentioned archive extractor

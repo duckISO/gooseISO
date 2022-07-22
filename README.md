@@ -9,7 +9,7 @@
   <a href="https://github.com/he3als/gooseISO/tree/main/src/GooseModules">Hashes of binaries</a>
 </p>
 
-**⚠️ Warning:** Do not use gooseISO until the next version is released.
+**⚠️ Warning:** gooseISO is under development and is not polished or finish. You should probably expect bugs.
 
 My personal presets and scripts to modify Windows 11 with NTLite for performance and privacy. GooseISO is a fork of [AtlasOS](https://github.com/Atlas-OS/Atlas). It is focused on being a long term installation, with not a lot of items stripped (mostly UWP bloat is stripped), causing less issues in the future as you can re-enable what you have disabled.
 - Defender is not stripped, but it is disabled by default

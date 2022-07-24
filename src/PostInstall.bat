@@ -33,7 +33,7 @@ goto postinstall
 echo Please wait, this may take a moment.
 echo Do not close this window or the other window!
 set success=
-C:\Windows\GooseModules\nsudo.exe -U:T -P:E -Wait C:\Windows\GooseModules\goose-config.bat /postinstall
+C:\Windows\GooseModules\Apps\nsudo.exe -U:T -P:E -Wait C:\Windows\GooseModules\goose-config.bat /postinstall
 :: Read from success.txt
 set /p success=<C:\Users\Public\success.txt
 :: Check if script finished

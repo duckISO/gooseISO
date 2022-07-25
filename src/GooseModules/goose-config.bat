@@ -205,10 +205,7 @@ call C:\Windows\GooseModules\refreshenv.bat
 setx path "%path%;C:\Windows\GooseModules\Apps;" -m  >nul 2>nul
 IF %ERRORLEVEL%==0 (echo %date% - %time% gooseISO Modules Path Set...>> C:\Windows\GooseModules\logs\install.log
 ) ELSE (echo %date% - %time% Failed to set gooseISO Modules Path! >> C:\Windows\GooseModules\logs\install.log)
-
-:: Refresh environment variables
-echo]
-echo Refresh environment variables... again...
+:: Refresh environment variables once more
 call C:\Windows\GooseModules\refreshenv.bat
 
 :: Breaks setting keyboard language
@@ -234,16 +231,16 @@ reg add "HKLM\System\CurrentControlSet\Control\TimeZoneInformation" /v RealTimeI
 :: Change NTP server from the default Windows server to pool.ntp.org
 sc config W32Time start=demand >nul 2>nul
 sc start W32Time >nul 2>nul
-w32tm /config /syncfromflags:manual /manualpeerlist:"0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org 3.pool.ntp.org"
+w32tm /config /syncfromflags:manual /manualpeerlist:"0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org 3.pool.ntp.org" > nul
 sc queryex "w32time"|Find "STATE"|Find /v "RUNNING"||(
     net stop w32time
     net start w32time
 ) >nul 2>nul
 :: Resync time to pool.ntp.org
-w32tm /config /update
-w32tm /resync
-sc stop W32Time
-sc config W32Time start=disabled
+w32tm /config /update > nul
+w32tm /resync > nul
+sc stop W32Time > nul
+sc config W32Time start=disabled > nul
 if %ERRORLEVEL%==0 (echo %date% - %time% NTP Server Set...>> C:\Windows\GooseModules\logs\install.log
 ) ELSE (echo %date% - %time% Failed to set NTP Server! >> C:\Windows\GooseModules\logs\install.log)
 
@@ -273,7 +270,7 @@ reg add "HKLM\Software\Policies\Microsoft\Control Panel\International" /v "Block
 
 echo]
 echo Disable tasks...
-echo Some tasks may not exist, it doesn't really matter though
+echo Some tasks may not exist, that doesn't matter too much though
 echo]
 :: All of the tasks disabled here will eventually be researched into
 echo Disabling \Microsoft\Windows\Power Efficiency Diagnostics\AnalyzeSystem
@@ -450,7 +447,7 @@ echo -------------------------------
 echo]
 
 echo Import the powerplan...
-powercfg -import "C:\Windows\GooseModules\gooseISO.pow" 11111111-1111-1111-1111-111111111111
+powercfg -import "C:\Windows\GooseModules\Other\gooseISO.pow" 11111111-1111-1111-1111-111111111111
 echo Set current power plan to gooseISO...
 powercfg /s 11111111-1111-1111-1111-111111111111
 if %ERRORLEVEL%==0 (echo %date% - %time% Power plan imported...>> C:\Windows\GooseModules\logs\install.log
@@ -518,10 +515,10 @@ echo]
 echo QoL
 echo -------------------------------
 if %postinstall%==1 (
-	echo Fix duplicate Windows Server Update Client IDs (SusClientID)
+	echo Fix duplicate Windows Server Update Client IDs ^(SusClientID^)
 	sc stop wuauserv >nul 2>nul
-	reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate" /v "SusClientIdValidation" /f
-	reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\WindowsUpdate" /v "SusClientId" /t REG_SZ /d "00000000-0000-0000-0000-000000000000" /f
+	reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate" /v "SusClientIdValidation" /f > nul
+	reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\WindowsUpdate" /v "SusClientId" /t REG_SZ /d "00000000-0000-0000-0000-000000000000" /f > nul
 )
 
 echo]
@@ -539,15 +536,15 @@ powercfg -h off > nul
 
 echo]
 echo Search Settings
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "AllowCortana" /t REG_DWORD /d 0 /f
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "BingSearchEnabled" /t REG_DWORD /d 0 /f
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Windows Search" /v "CortanaConsent" /t REG_DWORD /d "0" /f
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "AllowCortana" /t REG_DWORD /d 0 /f > nul
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "BingSearchEnabled" /t REG_DWORD /d 0 /f > nul
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Windows Search" /v "CortanaConsent" /t REG_DWORD /d "0" /f > nul
 
 :: Fix explorer whitebar bug
 echo]
 echo Fix explorer white-bar bug...
 %currentuser% cmd /c "start C:\Windows\explorer.exe"
-taskkill /f /im explorer.exe
+taskkill /f /im explorer.exe >nul 2>&1
 taskkill /f /im explorer.exe >nul 2>&1
 taskkill /f /im explorer.exe >nul 2>&1
 taskkill /f /im explorer.exe >nul 2>&1
@@ -895,8 +892,8 @@ echo Enable dark mode, disable transparency
 
 echo]
 echo Disable Speech Model Updates
-reg add "HKLM\Software\Policies\Microsoft\Speech" /v "AllowSpeechModelUpdate" /t REG_DWORD /d "0" /f
-reg add "HKLM\Software\Microsoft\Speech_OneCore\Preferences" /v "ModelDownloadAllowed" /t REG_DWORD /d "0" /f
+reg add "HKLM\Software\Policies\Microsoft\Speech" /v "AllowSpeechModelUpdate" /t REG_DWORD /d "0" /f > nul
+reg add "HKLM\Software\Microsoft\Speech_OneCore\Preferences" /v "ModelDownloadAllowed" /t REG_DWORD /d "0" /f > nul
 
 echo]
 echo Pause Maps Updates/Downloads - not needed
@@ -985,43 +982,44 @@ PowerShell -ExecutionPolicy Unrestricted -Command "Get-WindowsCapability -Online
 
 echo]
 echo OneDrive (probably is already stripped, just in case)
-echo Might error out, no problem though
+echo Might error out a bit on removing leftovers and other parts, ignore the errors
+echo]
 :: Kill OneDrive process
-taskkill /f /im OneDrive.exe
+taskkill /f /im OneDrive.exe > nul
 :: Uninstall OneDrive
 if %PROCESSOR_ARCHITECTURE%==x86 (
     %SystemRoot%\System32\OneDriveSetup.exe /uninstall 2>nul
 ) else (
     %SystemRoot%\SysWOW64\OneDriveSetup.exe /uninstall 2>nul
 )
-:: Remove OneDrive leftovers
-rd "%UserProfile%\OneDrive" /q /s
-rd "%LocalAppData%\Microsoft\OneDrive" /q /s
-rd "%ProgramData%\Microsoft OneDrive" /q /s
-rd "%SystemDrive%\OneDriveTemp" /q /s
-:: Delete OneDrive shortcuts
-del "%APPDATA%\Microsoft\Windows\Start Menu\Programs\Microsoft OneDrive.lnk" /s /f /q
-del "%APPDATA%\Microsoft\Windows\Start Menu\Programs\OneDrive.lnk" /s /f /q
-del "%USERPROFILE%\Links\OneDrive.lnk" /s /f /q
-:: Disable usage of OneDrive
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /t REG_DWORD /v "DisableFileSyncNGSC" /d 1 /f
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /t REG_DWORD /v "DisableFileSync" /d 1 /f
-reg add "HKLM\Software\Microsoft\OneDrive" /v "PreventNetworkTrafficPreUserSignIn" /t REG_DWORD /d "1" /f
-:: Prevent automatic OneDrive install for current user
-%currentuser% reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "OneDriveSetup" /f
-:: Prevent automatic OneDrive install for new users
-reg load "HKU\Default" "%SystemDrive%\Users\Default\NTUSER.DAT" 
-reg delete "HKU\Default\software\Microsoft\Windows\CurrentVersion\Run" /v "OneDriveSetup" /f
-reg unload "HKU\Default"
-:: Remove OneDrive from explorer menu
-reg delete "HKCR\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f
-reg delete "HKCR\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f
-reg add "HKCR\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /v System.IsPinnedToNameSpaceTree /d "0" /t REG_DWORD /f
-reg add "HKCR\Wow6432Node\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /v System.IsPinnedToNameSpaceTree /d "0" /t REG_DWORD /f
-:: Delete all OneDrive related Services
-for /f "tokens=1 delims=," %%x in ('schtasks /query /fo csv ^| find "OneDrive"') do schtasks /Delete /TN %%x /F
-:: Delete OneDrive path from registry
-%currentuser% reg delete "HKCU\Environment" /v "OneDrive" /f
+echo Remove OneDrive leftovers
+rd "%UserProfile%\OneDrive" /q /s > nul
+rd "%LocalAppData%\Microsoft\OneDrive" /q /s > nul
+rd "%ProgramData%\Microsoft OneDrive" /q /s > nul
+rd "%SystemDrive%\OneDriveTemp" /q /s > nul
+echo Delete OneDrive shortcuts
+del "%APPDATA%\Microsoft\Windows\Start Menu\Programs\Microsoft OneDrive.lnk" /s /f /q > nul
+del "%APPDATA%\Microsoft\Windows\Start Menu\Programs\OneDrive.lnk" /s /f /q > nul
+del "%USERPROFILE%\Links\OneDrive.lnk" /s /f /q > nul
+echo Disable usage of OneDrive
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /t REG_DWORD /v "DisableFileSyncNGSC" /d 1 /f > nul
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /t REG_DWORD /v "DisableFileSync" /d 1 /f > nul
+reg add "HKLM\Software\Microsoft\OneDrive" /v "PreventNetworkTrafficPreUserSignIn" /t REG_DWORD /d "1" /f > nul
+echo Prevent automatic OneDrive install for current user
+%currentuser% reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "OneDriveSetup" /f > nul
+echo Prevent automatic OneDrive install for new users
+reg load "HKU\Default" "%SystemDrive%\Users\Default\NTUSER.DAT"  > nul
+reg delete "HKU\Default\software\Microsoft\Windows\CurrentVersion\Run" /v "OneDriveSetup" /f > nul
+reg unload "HKU\Default" > nul
+echo Remove OneDrive from explorer menu
+reg delete "HKCR\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f > nul
+reg delete "HKCR\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f > nul
+reg add "HKCR\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /v System.IsPinnedToNameSpaceTree /d "0" /t REG_DWORD /f > nul
+reg add "HKCR\Wow6432Node\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /v System.IsPinnedToNameSpaceTree /d "0" /t REG_DWORD /f > nul
+echo Delete all OneDrive related Services
+for /f "tokens=1 delims=," %%x in ('schtasks /query /fo csv ^| find "OneDrive"') do schtasks /Delete /TN %%x /F > nul
+echo Delete OneDrive path from registry
+%currentuser% reg delete "HKCU\Environment" /v "OneDrive" /f > nul
 
 echo]
 echo Remove Meet Now icon from taskbar
@@ -1298,6 +1296,8 @@ echo ---------------------------------------
 
 echo]
 echo Remove UWP bloat
+echo Most of the UWP bloat (if not all) should be stripped with NTLite, this section is mostly for when you update and the bloat reinstalls
+setlocal DisableDelayedExpansion
 :: https://privacy.sexy/
 echo Teams
 powershell -NoProfile -NoLogo -Command "get-appxpackage *teams* | remove-appxpackage"
@@ -1370,6 +1370,8 @@ REM %delCapabilty% SmbDirect
 REM %delCapabilty% MSRDC-Infrastructure
 REM %delCapabilty% Printing-XPSServices-Features
 REM %delCapabilty% Printing-PrintToPDFServices-Features
+
+setlocal EnableDelayedExpansion
 
 :tweaks4-POST
 echo]
@@ -1537,34 +1539,34 @@ echo Edge
 reg add "HKLM\Software\Policies\Microsoft\Windows\EdgeUI" /v "DisableMFUTracking" /t REG_DWORD /d "1" /f > nul
 reg add "HKLM\Software\Policies\Microsoft\MicrosoftEdge\Main" /v "AllowPrelaunch" /t REG_DWORD /d "0" /f > nul
 :: reg add "HKLM\Software\Microsoft\EdgeUpdate" /v "DoNotUpdateToEdgeWithChromium" /t REG_DWORD /d "0" /f > nul
-Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\FlipAhead" /v "FPEnabled" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Main" /v "ShowSearchSuggestionsGlobal" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Main" /v "Use FormSuggest" /t REG_SZ /d "no" /f
-Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Main" /v "DoNotTrack" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Main" /v "OptimizeWindowsSearchResultsForScreenReaders" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Privacy" /v "EnableEncryptedMediaExtensions" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\ServiceUI" /v "EnableCortana" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\ServiceUI\ShowSearchHistory" /ve /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "UserFeedbackAllowed" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "AutofillCreditCardEnabled" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "LocalProvidersEnabled" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "AddressBarMicrosoftSearchInBingProviderEnabled" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "EdgeShoppingAssistantEnabled" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "ResolveNavigationErrorsUseWebService" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "AlternateErrorPagesEnabled" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "NetworkPredictionOptions" /t REG_DWORD /d "2" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "SmartScreenEnabled" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "MetricsReportingEnabled" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "PersonalizationReportingEnabled" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "PaymentMethodQueryEnabled" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "SendSiteInfoToImproveServices" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "SearchSuggestEnabled" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "ConfigureDoNotTrack" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "AutofillAddressEnabled" /t REG_DWORD /d "0" /f
-Reg.exe add "HKLM\Software\Microsoft\PolicyManager\current\device\Browser" /v "AllowAddressBarDropdown" /t REG_DWORD /d "0" /f
-Reg.exe add "HKLM\Software\Policies\Microsoft\Edge" /v "AutofillCreditCardEnabled" /t REG_DWORD /d "0" /f
-Reg.exe add "HKLM\Software\Policies\Microsoft\Edge" /v "UserFeedbackAllowed" /t REG_DWORD /d "0" /f
-Reg.exe add "HKLM\Software\Policies\Microsoft\MicrosoftEdge\TabPreloader" /v "AllowTabPreloading" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\FlipAhead" /v "FPEnabled" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Main" /v "ShowSearchSuggestionsGlobal" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Main" /v "Use FormSuggest" /t REG_SZ /d "no" /f > nul
+Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Main" /v "DoNotTrack" /t REG_DWORD /d "1" /f > nul
+Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Main" /v "OptimizeWindowsSearchResultsForScreenReaders" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Privacy" /v "EnableEncryptedMediaExtensions" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\ServiceUI" /v "EnableCortana" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\ServiceUI\ShowSearchHistory" /ve /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "UserFeedbackAllowed" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "AutofillCreditCardEnabled" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "LocalProvidersEnabled" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "AddressBarMicrosoftSearchInBingProviderEnabled" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "EdgeShoppingAssistantEnabled" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "ResolveNavigationErrorsUseWebService" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "AlternateErrorPagesEnabled" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "NetworkPredictionOptions" /t REG_DWORD /d "2" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "SmartScreenEnabled" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "MetricsReportingEnabled" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "PersonalizationReportingEnabled" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "PaymentMethodQueryEnabled" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "SendSiteInfoToImproveServices" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "SearchSuggestEnabled" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "ConfigureDoNotTrack" /t REG_DWORD /d "1" /f > nul
+Reg.exe add "HKCU\Software\Policies\Microsoft\Edge" /v "AutofillAddressEnabled" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKLM\Software\Microsoft\PolicyManager\current\device\Browser" /v "AllowAddressBarDropdown" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKLM\Software\Policies\Microsoft\Edge" /v "AutofillCreditCardEnabled" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKLM\Software\Policies\Microsoft\Edge" /v "UserFeedbackAllowed" /t REG_DWORD /d "0" /f > nul
+Reg.exe add "HKLM\Software\Policies\Microsoft\MicrosoftEdge\TabPreloader" /v "AllowTabPreloading" /t REG_DWORD /d "0" /f > nul
 
 echo]
 echo Install .cab context menu
@@ -1652,75 +1654,62 @@ if %ERRORLEVEL%==0 (echo %date% - %time% Process Priorities Set...>> C:\Windows\
 echo]
 echo Boot configuration
 echo -----------------------------
+echo]
 
 :: https://docs.google.com/spreadsheets/d/1ZWQFycOWdODkUOuYZCxm5lTp08V2m7gjZQSCjywAsl8/edit#gid=1190036594
 :: https://sites.google.com/view/melodystweaks/basictweaks
-echo]
 echo Lowering dual boot choice time
 :: No, this does NOT affect single OS boot time.
 :: This is directly shown in microsoft docs https://docs.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--timeout#parameters
-bcdedit /timeout 10
+bcdedit /timeout 10 > nul
 :: Setting to No provides worse results, delete the value instead.
 :: This is here as a safeguard incase of User Error.
 bcdedit /deletevalue useplatformclock >nul 2>nul
-echo]
 echo Disable synthetic timer
-bcdedit /set useplatformtick yes
+bcdedit /set useplatformtick yes > nul
 :: https://docs.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set#additional-settings
 :: Increases latency
 :: bcdedit /set disabledynamictick Yes
-echo]
 echo Disable DEP
 :: https://docs.microsoft.com/en-us/windows/win32/memory/data-execution-prevention
-bcdedit /set nx AlwaysOff
+bcdedit /set nx AlwaysOff > nul
 :: echo]
 :: echo Hyper-V support is disabled by default
 :: bcdedit /set hypervisorlaunchtype off
-echo]
 echo Use legacy boot menu
-bcdedit /set bootmenupolicy Legacy
-echo]
+bcdedit /set bootmenupolicy Legacy > nul
 echo Make dual boot menu more descriptive
-bcdedit /set description gooseISO %ver%
-echo]
+bcdedit /set description gooseISO %ver% > nul
 echo Lower latency - tscsyncpolicy
-bcdedit /set tscsyncpolicy Enhanced			
-echo]
+bcdedit /set tscsyncpolicy Enhanced > nul
 echo Disable 57-bits 5-level paging
-bcdedit /set linearaddress57 OptOut
-bcdedit /set increaseuserva 268435328
-echo]
+bcdedit /set linearaddress57 OptOut > nul
+bcdedit /set increaseuserva 268435328 > nul
 echo Avoid the use of uncontiguous portions of low-memory from the OS
 echo Causes system freezes on unstable memory sticks
-bcdedit /set firstmegabytepolicy UseAll
-bcdedit /set avoidlowmemory 0x8000000
-bcdedit /set nolowmem Yes
-echo]
+bcdedit /set firstmegabytepolicy UseAll > nul
+bcdedit /set avoidlowmemory 0x8000000 > nul
+bcdedit /set nolowmem Yes > nul
 echo Disable some of the kernel memory mitigations
 echo Causes boot crash/loops if Intel SGX
-bcdedit /set allowedinmemorysettings 0x0
-bcdedit /set isolatedcontext No
-echo]
+bcdedit /set allowedinmemorysettings 0x0 > nul
+bcdedit /set isolatedcontext No > nul
 echo Disable DMA memory protection and cores isolation
-bcdedit /set vsmlaunchtype Off
-bcdedit /set vm No
-echo]
+bcdedit /set vsmlaunchtype Off > nul
+bcdedit /set vm No > nul
 echo Enable X2Apic and enable Memory Mapping for PCI-E devices
-bcdedit /set x2apicpolicy Enable
-bcdedit /set configaccesspolicy Default
-bcdedit /set MSI Default
-bcdedit /set usephysicaldestination No
-bcdedit /set usefirmwarepcisettings No
-echo]
+bcdedit /set x2apicpolicy Enable > nul
+bcdedit /set configaccesspolicy Default > nul
+bcdedit /set MSI Default > nul
+bcdedit /set usephysicaldestination No > nul
+bcdedit /set usefirmwarepcisettings No > nul
 echo Disable automatic repair
 :: https://winaero.com/how-to-disable-automatic-repair-at-windows-10-boot/
-bcdedit /set {current} bootstatuspolicy IgnoreAllFailures
-echo]
+bcdedit /set {current} bootstatuspolicy IgnoreAllFailures > nul
 echo Disable boot logo
-bcdedit /set {globalsettings} custom:16000067 true
-echo]
+bcdedit /set {globalsettings} custom:16000067 true > nul
 echo Disable the spinning/loading animation
-bcdedit /set {globalsettings} custom:16000069 true
+bcdedit /set {globalsettings} custom:16000069 true > nul
 echo %date% - %time% BCD Options Set...>> C:\Windows\GooseModules\logs\install.log
 
 :tweaks5-POST
@@ -1733,60 +1722,60 @@ echo]
 echo Firewall rules (blocking apps that shouldn't have internet access)
 netsh Advfirewall set allprofiles state on > nul
 set firewallblock=netsh advfirewall firewall add rule
-set firewallblock2=protocol=tcp dir=out enable=yes action=block profile=any > nul
-%firewallblock% name="Block calc.exe netconns" program="%WinDir%\System32\calc.exe" %firewallblock2%
-%firewallblock% name="Block certutil.exe netconns" program="%WinDir%\System32\certutil.exe" %firewallblock2%
-%firewallblock% name="Block cmstp.exe netconns" program="%WinDir%\System32\cmstp.exe" %firewallblock2%
-%firewallblock% name="Block cscript.exe netconns" program="%WinDir%\System32\cscript.exe" %firewallblock2%
-%firewallblock% name="Block esentutl.exe netconns" program="%WinDir%\System32\esentutl.exe" %firewallblock2%
-%firewallblock% name="Block expand.exe netconns" program="%WinDir%\System32\expand.exe" %firewallblock2%
-%firewallblock% name="Block extrac32.exe netconns" program="%WinDir%\System32\extrac32.exe" %firewallblock2%
-%firewallblock% name="Block findstr.exe netconns" program="%WinDir%\System32\findstr.exe" %firewallblock2%
-%firewallblock% name="Block hh.exe netconns" program="%WinDir%\System32\hh.exe" %firewallblock2%
-%firewallblock% name="Block makecab.exe netconns" program="%WinDir%\System32\makecab.exe" %firewallblock2%
-%firewallblock% name="Block mshta.exe netconns" program="%WinDir%\System32\mshta.exe" %firewallblock2%
-%firewallblock% name="Block msiexec.exe netconns" program="%WinDir%\System32\msiexec.exe" %firewallblock2%
-%firewallblock% name="Block nltest.exe netconns" program="%WinDir%\System32\nltest.exe" %firewallblock2%
-%firewallblock% name="Block Notepad.exe netconns" program="%WinDir%\System32\notepad.exe" %firewallblock2%
-%firewallblock% name="Block pcalua.exe netconns" program="%WinDir%\System32\pcalua.exe" %firewallblock2%
-%firewallblock% name="Block print.exe netconns" program="%WinDir%\System32\print.exe" %firewallblock2%
-%firewallblock% name="Block regsvr32.exe netconns" program="%WinDir%\System32\regsvr32.exe" %firewallblock2%
-%firewallblock% name="Block replace.exe netconns" program="%WinDir%\System32\replace.exe" %firewallblock2%
-%firewallblock% name="Block rundll32.exe netconns" program="%WinDir%\System32\rundll32.exe" %firewallblock2%
-%firewallblock% name="Block runscripthelper.exe netconns" program="%WinDir%\System32\runscripthelper.exe" %firewallblock2%
-%firewallblock% name="Block scriptrunner.exe netconns" program="%WinDir%\System32\scriptrunner.exe" %firewallblock2%
-%firewallblock% name="Block SyncAppvPublishingServer.exe netconns" program="%WinDir%\System32\SyncAppvPublishingServer.exe" %firewallblock2%
-%firewallblock% name="Block wmic.exe netconns" program="%WinDir%\System32\wbem\wmic.exe" %firewallblock2%
-%firewallblock% name="Block wscript.exe netconns" program="%WinDir%\System32\wscript.exe" %firewallblock2%
-%firewallblock% name="Block regasm.exe netconns" program="%WinDir%\System32\regasm.exe" %firewallblock2%
-%firewallblock% name="Block odbcconf.exe netconns" program="%WinDir%\System32\odbcconf.exe" %firewallblock2%
-%firewallblock% name="Block regasm.exe netconns" program="%WinDir%\SysWOW64\regasm.exe" %firewallblock2%
-%firewallblock% name="Block odbcconf.exe netconns" program="%WinDir%\SysWOW64\odbcconf.exe" %firewallblock2%
-%firewallblock% name="Block calc.exe netconns" program="%WinDir%\SysWOW64\calc.exe" %firewallblock2%
-%firewallblock% name="Block certutil.exe netconns" program="%WinDir%\SysWOW64\certutil.exe" %firewallblock2%
-%firewallblock% name="Block cmstp.exe netconns" program="%WinDir%\SysWOW64\cmstp.exe" %firewallblock2%
-%firewallblock% name="Block cscript.exe netconns" program="%WinDir%\SysWOW64\cscript.exe" %firewallblock2%
-%firewallblock% name="Block esentutl.exe netconns" program="%WinDir%\SysWOW64\esentutl.exe" %firewallblock2%
-%firewallblock% name="Block expand.exe netconns" program="%WinDir%\SysWOW64\expand.exe" %firewallblock2%
-%firewallblock% name="Block extrac32.exe netconns" program="%WinDir%\SysWOW64\extrac32.exe" %firewallblock2%
-%firewallblock% name="Block findstr.exe netconns" program="%WinDir%\SysWOW64\findstr.exe" %firewallblock2%
-%firewallblock% name="Block hh.exe netconns" program="%WinDir%\SysWOW64\hh.exe" %firewallblock2%
-%firewallblock% name="Block makecab.exe netconns" program="%WinDir%\SysWOW64\makecab.exe" %firewallblock2%
-%firewallblock% name="Block mshta.exe netconns" program="%WinDir%\SysWOW64\mshta.exe" %firewallblock2%
-%firewallblock% name="Block msiexec.exe netconns" program="%WinDir%\SysWOW64\msiexec.exe" %firewallblock2%
-%firewallblock% name="Block nltest.exe netconns" program="%WinDir%\SysWOW64\nltest.exe" %firewallblock2%
-%firewallblock% name="Block Notepad.exe netconns" program="%WinDir%\SysWOW64\notepad.exe" %firewallblock2%
-%firewallblock% name="Block pcalua.exe netconns" program="%WinDir%\SysWOW64\pcalua.exe" %firewallblock2%
-%firewallblock% name="Block print.exe netconns" program="%WinDir%\SysWOW64\print.exe" %firewallblock2%
-%firewallblock% name="Block regsvr32.exe netconns" program="%WinDir%\SysWOW64\regsvr32.exe" %firewallblock2%
-%firewallblock% name="Block replace.exe netconns" program="%WinDir%\SysWOW64\replace.exe" %firewallblock2%
-%firewallblock% name="Block rpcping.exe netconns" program="%WinDir%\SysWOW64\rpcping.exe" %firewallblock2%
-%firewallblock% name="Block rundll32.exe netconns" program="%WinDir%\SysWOW64\rundll32.exe" %firewallblock2%
-%firewallblock% name="Block runscripthelper.exe netconns" program="%WinDir%\SysWOW64\runscripthelper.exe" %firewallblock2%
-%firewallblock% name="Block scriptrunner.exe netconns" program="%WinDir%\SysWOW64\scriptrunner.exe" %firewallblock2%
-%firewallblock% name="Block SyncAppvPublishingServer.exe netconns" program="%WinDir%\SysWOW64\SyncAppvPublishingServer.exe" %firewallblock2%
-%firewallblock% name="Block wmic.exe netconns" program="%WinDir%\SysWOW64\wbem\wmic.exe" %firewallblock2%
-%firewallblock% name="Block wscript.exe netconns" program="%WinDir%\SysWOW64\wscript.exe" %firewallblock2%
+set firewallblock2=protocol=tcp dir=out enable=yes action=block profile=any
+%firewallblock% name="Block calc.exe netconns" program="%WinDir%\System32\calc.exe" %firewallblock2% > nul
+%firewallblock% name="Block certutil.exe netconns" program="%WinDir%\System32\certutil.exe" %firewallblock2% > nul
+%firewallblock% name="Block cmstp.exe netconns" program="%WinDir%\System32\cmstp.exe" %firewallblock2% > nul
+%firewallblock% name="Block cscript.exe netconns" program="%WinDir%\System32\cscript.exe" %firewallblock2% > nul
+%firewallblock% name="Block esentutl.exe netconns" program="%WinDir%\System32\esentutl.exe" %firewallblock2% > nul
+%firewallblock% name="Block expand.exe netconns" program="%WinDir%\System32\expand.exe" %firewallblock2% > nul
+%firewallblock% name="Block extrac32.exe netconns" program="%WinDir%\System32\extrac32.exe" %firewallblock2% > nul
+%firewallblock% name="Block findstr.exe netconns" program="%WinDir%\System32\findstr.exe" %firewallblock2% > nul
+%firewallblock% name="Block hh.exe netconns" program="%WinDir%\System32\hh.exe" %firewallblock2% > nul
+%firewallblock% name="Block makecab.exe netconns" program="%WinDir%\System32\makecab.exe" %firewallblock2% > nul
+%firewallblock% name="Block mshta.exe netconns" program="%WinDir%\System32\mshta.exe" %firewallblock2% > nul
+%firewallblock% name="Block msiexec.exe netconns" program="%WinDir%\System32\msiexec.exe" %firewallblock2% > nul
+%firewallblock% name="Block nltest.exe netconns" program="%WinDir%\System32\nltest.exe" %firewallblock2% > nul
+%firewallblock% name="Block Notepad.exe netconns" program="%WinDir%\System32\notepad.exe" %firewallblock2% > nul
+%firewallblock% name="Block pcalua.exe netconns" program="%WinDir%\System32\pcalua.exe" %firewallblock2% > nul
+%firewallblock% name="Block print.exe netconns" program="%WinDir%\System32\print.exe" %firewallblock2% > nul
+%firewallblock% name="Block regsvr32.exe netconns" program="%WinDir%\System32\regsvr32.exe" %firewallblock2% > nul
+%firewallblock% name="Block replace.exe netconns" program="%WinDir%\System32\replace.exe" %firewallblock2% > nul
+%firewallblock% name="Block rundll32.exe netconns" program="%WinDir%\System32\rundll32.exe" %firewallblock2% > nul
+%firewallblock% name="Block runscripthelper.exe netconns" program="%WinDir%\System32\runscripthelper.exe" %firewallblock2% > nul
+%firewallblock% name="Block scriptrunner.exe netconns" program="%WinDir%\System32\scriptrunner.exe" %firewallblock2% > nul
+%firewallblock% name="Block SyncAppvPublishingServer.exe netconns" program="%WinDir%\System32\SyncAppvPublishingServer.exe" %firewallblock2% > nul
+%firewallblock% name="Block wmic.exe netconns" program="%WinDir%\System32\wbem\wmic.exe" %firewallblock2% > nul
+%firewallblock% name="Block wscript.exe netconns" program="%WinDir%\System32\wscript.exe" %firewallblock2% > nul
+%firewallblock% name="Block regasm.exe netconns" program="%WinDir%\System32\regasm.exe" %firewallblock2% > nul
+%firewallblock% name="Block odbcconf.exe netconns" program="%WinDir%\System32\odbcconf.exe" %firewallblock2% > nul
+%firewallblock% name="Block regasm.exe netconns" program="%WinDir%\SysWOW64\regasm.exe" %firewallblock2% > nul
+%firewallblock% name="Block odbcconf.exe netconns" program="%WinDir%\SysWOW64\odbcconf.exe" %firewallblock2% > nul
+%firewallblock% name="Block calc.exe netconns" program="%WinDir%\SysWOW64\calc.exe" %firewallblock2% > nul
+%firewallblock% name="Block certutil.exe netconns" program="%WinDir%\SysWOW64\certutil.exe" %firewallblock2% > nul
+%firewallblock% name="Block cmstp.exe netconns" program="%WinDir%\SysWOW64\cmstp.exe" %firewallblock2% > nul
+%firewallblock% name="Block cscript.exe netconns" program="%WinDir%\SysWOW64\cscript.exe" %firewallblock2% > nul
+%firewallblock% name="Block esentutl.exe netconns" program="%WinDir%\SysWOW64\esentutl.exe" %firewallblock2% > nul
+%firewallblock% name="Block expand.exe netconns" program="%WinDir%\SysWOW64\expand.exe" %firewallblock2% > nul
+%firewallblock% name="Block extrac32.exe netconns" program="%WinDir%\SysWOW64\extrac32.exe" %firewallblock2% > nul
+%firewallblock% name="Block findstr.exe netconns" program="%WinDir%\SysWOW64\findstr.exe" %firewallblock2% > nul
+%firewallblock% name="Block hh.exe netconns" program="%WinDir%\SysWOW64\hh.exe" %firewallblock2% > nul
+%firewallblock% name="Block makecab.exe netconns" program="%WinDir%\SysWOW64\makecab.exe" %firewallblock2% > nul
+%firewallblock% name="Block mshta.exe netconns" program="%WinDir%\SysWOW64\mshta.exe" %firewallblock2% > nul
+%firewallblock% name="Block msiexec.exe netconns" program="%WinDir%\SysWOW64\msiexec.exe" %firewallblock2% > nul
+%firewallblock% name="Block nltest.exe netconns" program="%WinDir%\SysWOW64\nltest.exe" %firewallblock2% > nul
+%firewallblock% name="Block Notepad.exe netconns" program="%WinDir%\SysWOW64\notepad.exe" %firewallblock2% > nul
+%firewallblock% name="Block pcalua.exe netconns" program="%WinDir%\SysWOW64\pcalua.exe" %firewallblock2% > nul
+%firewallblock% name="Block print.exe netconns" program="%WinDir%\SysWOW64\print.exe" %firewallblock2% > nul
+%firewallblock% name="Block regsvr32.exe netconns" program="%WinDir%\SysWOW64\regsvr32.exe" %firewallblock2% > nul
+%firewallblock% name="Block replace.exe netconns" program="%WinDir%\SysWOW64\replace.exe" %firewallblock2% > nul
+%firewallblock% name="Block rpcping.exe netconns" program="%WinDir%\SysWOW64\rpcping.exe" %firewallblock2% > nul
+%firewallblock% name="Block rundll32.exe netconns" program="%WinDir%\SysWOW64\rundll32.exe" %firewallblock2% > nul
+%firewallblock% name="Block runscripthelper.exe netconns" program="%WinDir%\SysWOW64\runscripthelper.exe" %firewallblock2% > nul
+%firewallblock% name="Block scriptrunner.exe netconns" program="%WinDir%\SysWOW64\scriptrunner.exe" %firewallblock2% > nul
+%firewallblock% name="Block SyncAppvPublishingServer.exe netconns" program="%WinDir%\SysWOW64\SyncAppvPublishingServer.exe" %firewallblock2% > nul
+%firewallblock% name="Block wmic.exe netconns" program="%WinDir%\SysWOW64\wbem\wmic.exe" %firewallblock2% > nul
+%firewallblock% name="Block wscript.exe netconns" program="%WinDir%\SysWOW64\wscript.exe" %firewallblock2% > nul
 
 echo]
 echo Disable TsX to mitigate ZombieLoad, should be ideally disabled by microcode (update your BIOS)
@@ -2014,10 +2003,11 @@ echo Harden NetBios
 reg add "HKLM\System\CurrentControlSet\Services\NetBT\Parameters" /v "NodeType" /t REG_DWORD /d "2" /f > nul
 
 echo]
-echo Mitigate against HiveNightmare/SeriousSAM
-icacls %windir%\system32\config\*.* /inheritance:e > nul=
+echo Mitigate against HiveNightmare^/SeriousSAM
+icacls %windir%\system32\config\*.* /inheritance:e > nul
 
 :tweaks6-POST
+echo]
 echo Context menu ^& some QoL tweaks
 echo -----------------------------
 
@@ -2027,37 +2017,37 @@ reg add "HKEY_CLASSES_ROOT\CLSID\{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}\ShellFol
 
 echo]
 echo Disable file sharing and enable firewall for all profiles
-reg add "HKLM\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile" /v "DisableNotifications" /t REG_DWORD /d "1" /f
-reg add "HKLM\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile" /v "EnableFirewall" /t REG_DWORD /d "1" /f
-reg add "HKLM\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile" /v "DisableNotifications" /t REG_DWORD /d "1" /f
-reg add "HKLM\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile" /v "EnableFirewall" /t REG_DWORD /d "1" /f
-reg add "HKLM\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DomainProfile" /v "EnableFirewall" /t REG_DWORD /d "1" /f
+reg add "HKLM\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile" /v "DisableNotifications" /t REG_DWORD /d "1" /f > nul
+reg add "HKLM\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile" /v "EnableFirewall" /t REG_DWORD /d "1" /f > nul
+reg add "HKLM\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile" /v "DisableNotifications" /t REG_DWORD /d "1" /f > nul
+reg add "HKLM\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile" /v "EnableFirewall" /t REG_DWORD /d "1" /f > nul
+reg add "HKLM\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DomainProfile" /v "EnableFirewall" /t REG_DWORD /d "1" /f > nul
 
 echo]
 echo Disable folders in 'This PC'
 :: Credit to Shawn Brink
 :: https://www.tenforums.com/tutorials/6015-add-remove-folders-pc-windows-10-a.html
 echo Disable 3D Objects
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{31C0DD25-9439-4F12-BF41-7FF4EDA38722}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f
-reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{31C0DD25-9439-4F12-BF41-7FF4EDA38722}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{31C0DD25-9439-4F12-BF41-7FF4EDA38722}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f > nul
+reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{31C0DD25-9439-4F12-BF41-7FF4EDA38722}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f > nul
 echo Disable music
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{a0c69a99-21c8-4671-8703-7934162fcf1d}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f
-reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{a0c69a99-21c8-4671-8703-7934162fcf1d}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{a0c69a99-21c8-4671-8703-7934162fcf1d}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f > nul
+reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{a0c69a99-21c8-4671-8703-7934162fcf1d}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f > nul
 echo Disable downloads
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{7d83ee9b-2244-4e70-b1f5-5393042af1e4}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f
-reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{7d83ee9b-2244-4e70-b1f5-5393042af1e4}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{7d83ee9b-2244-4e70-b1f5-5393042af1e4}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f > nul
+reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{7d83ee9b-2244-4e70-b1f5-5393042af1e4}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f > nul
 echo Disable pictures
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{0ddd015d-b06c-45d5-8c4c-f59713854639}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f
-reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{0ddd015d-b06c-45d5-8c4c-f59713854639}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{0ddd015d-b06c-45d5-8c4c-f59713854639}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f > nul
+reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{0ddd015d-b06c-45d5-8c4c-f59713854639}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f > nul
 echo Disable videos
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{35286a68-3c57-41a1-bbb1-0eae73d76c95}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f
-reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{35286a68-3c57-41a1-bbb1-0eae73d76c95}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{35286a68-3c57-41a1-bbb1-0eae73d76c95}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f > nul
+reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{35286a68-3c57-41a1-bbb1-0eae73d76c95}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f > nul
 echo Disable documents
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{f42ee2d3-909f-4907-8871-4c22fc0bf756}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f
-reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{f42ee2d3-909f-4907-8871-4c22fc0bf756}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{f42ee2d3-909f-4907-8871-4c22fc0bf756}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f > nul
+reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{f42ee2d3-909f-4907-8871-4c22fc0bf756}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f > nul
 echo Disable desktop
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{B4BFCC3A-DB2C-424C-B029-7FE99A87C641}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f
-reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{B4BFCC3A-DB2C-424C-B029-7FE99A87C641}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{B4BFCC3A-DB2C-424C-B029-7FE99A87C641}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f > nul
+reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{B4BFCC3A-DB2C-424C-B029-7FE99A87C641}\PropertyBag" /v "ThisPCPolicy" /t REG_SZ /d "Hide" /f > nul
 
 echo]
 echo Enable full classic context menus in Windows 11
@@ -2080,7 +2070,7 @@ reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Icons" /v
 echo]
 echo Increase icon cache size
 :: Can improve performance: https://winaero.com/change-icon-cache-size-windows-10/
-reg add "HKLM\\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "Max Cached Icons" /t REG_SZ /d "8192" > nul
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "Max Cached Icons" /t REG_SZ /d "8192" > nul
 
 echo]
 echo Disable jump lists
@@ -2093,412 +2083,415 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "J
 echo]
 echo Windows Update context menu on the desktop
 :: Credit to Winaero Tweaker
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate" /v "Icon" /t REG_SZ /d "%%SystemRoot%%\\System32\\shell32.dll,-47" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate" /v "Position" /t REG_SZ /d "Bottom" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate" /v "SubCommands" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate" /v "MUIVerb" /t REG_SZ /d "Windows Update" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\01WindowsUpdate" /v "MUIVerb" /t REG_SZ /d "Windows Update" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\01WindowsUpdate" /v "Icon" /t REG_SZ /d "%%SystemRoot%%\\System32\\bootux.dll,-1032" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\01WindowsUpdate" /v "SettingsURI" /t REG_SZ /d "ms-settings:windowsupdate" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\01WindowsUpdate\Command" /v "DelegateExecute" /t REG_SZ /d "{556FF0D6-A1EE-49E5-9FA4-90AE116AD744}" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\02CheckForUpdates" /v "SettingsURI" /t REG_SZ /d "ms-settings:windowsupdate-action" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\02CheckForUpdates" /v "MUIVerb" /t REG_SZ /d "Check for updates" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\02CheckForUpdates" /v "Icon" /t REG_SZ /d "%%SystemRoot%%\\System32\\bootux.dll,-1032" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\02CheckForUpdates\Command" /v "DelegateExecute" /t REG_SZ /d "{556FF0D6-A1EE-49E5-9FA4-90AE116AD744}" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\03UpdateHistory" /v "MUIVerb" /t REG_SZ /d "Update history" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\03UpdateHistory" /v "Icon" /t REG_SZ /d "%%SystemRoot%%\\System32\\bootux.dll,-1032" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\03UpdateHistory" /v "SettingsURI" /t REG_SZ /d "ms-settings:windowsupdate-history" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\03UpdateHistory\Command" /v "DelegateExecute" /t REG_SZ /d "{556FF0D6-A1EE-49E5-9FA4-90AE116AD744}" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\04RestartOptions" /v "SettingsURI" /t REG_SZ /d "ms-settings:windowsupdate-restartoptions" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\04RestartOptions" /v "MUIVerb" /t REG_SZ /d "Restart options" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\04RestartOptions" /v "Icon" /t REG_SZ /d "%%SystemRoot%%\\System32\\bootux.dll,-1032" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\04RestartOptions\Command" /v "DelegateExecute" /t REG_SZ /d "{556FF0D6-A1EE-49E5-9FA4-90AE116AD744}" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\05AdvancedOptions" /v "SettingsURI" /t REG_SZ /d "ms-settings:windowsupdate-options" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\05AdvancedOptions" /v "MUIVerb" /t REG_SZ /d "Advanced options" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\05AdvancedOptions" /v "Icon" /t REG_SZ /d "%%SystemRoot%%\\System32\\bootux.dll,-1032" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\05AdvancedOptions\Command" /v "DelegateExecute" /t REG_SZ /d "{556FF0D6-A1EE-49E5-9FA4-90AE116AD744}" /f
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate" /v "Icon" /t REG_SZ /d "%%SystemRoot%%\\System32\\shell32.dll,-47" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate" /v "Position" /t REG_SZ /d "Bottom" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate" /v "SubCommands" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate" /v "MUIVerb" /t REG_SZ /d "Windows Update" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\01WindowsUpdate" /v "MUIVerb" /t REG_SZ /d "Windows Update" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\01WindowsUpdate" /v "Icon" /t REG_SZ /d "%%SystemRoot%%\\System32\\bootux.dll,-1032" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\01WindowsUpdate" /v "SettingsURI" /t REG_SZ /d "ms-settings:windowsupdate" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\01WindowsUpdate\Command" /v "DelegateExecute" /t REG_SZ /d "{556FF0D6-A1EE-49E5-9FA4-90AE116AD744}" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\02CheckForUpdates" /v "SettingsURI" /t REG_SZ /d "ms-settings:windowsupdate-action" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\02CheckForUpdates" /v "MUIVerb" /t REG_SZ /d "Check for updates" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\02CheckForUpdates" /v "Icon" /t REG_SZ /d "%%SystemRoot%%\\System32\\bootux.dll,-1032" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\02CheckForUpdates\Command" /v "DelegateExecute" /t REG_SZ /d "{556FF0D6-A1EE-49E5-9FA4-90AE116AD744}" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\03UpdateHistory" /v "MUIVerb" /t REG_SZ /d "Update history" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\03UpdateHistory" /v "Icon" /t REG_SZ /d "%%SystemRoot%%\\System32\\bootux.dll,-1032" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\03UpdateHistory" /v "SettingsURI" /t REG_SZ /d "ms-settings:windowsupdate-history" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\03UpdateHistory\Command" /v "DelegateExecute" /t REG_SZ /d "{556FF0D6-A1EE-49E5-9FA4-90AE116AD744}" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\04RestartOptions" /v "SettingsURI" /t REG_SZ /d "ms-settings:windowsupdate-restartoptions" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\04RestartOptions" /v "MUIVerb" /t REG_SZ /d "Restart options" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\04RestartOptions" /v "Icon" /t REG_SZ /d "%%SystemRoot%%\\System32\\bootux.dll,-1032" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\04RestartOptions\Command" /v "DelegateExecute" /t REG_SZ /d "{556FF0D6-A1EE-49E5-9FA4-90AE116AD744}" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\05AdvancedOptions" /v "SettingsURI" /t REG_SZ /d "ms-settings:windowsupdate-options" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\05AdvancedOptions" /v "MUIVerb" /t REG_SZ /d "Advanced options" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\05AdvancedOptions" /v "Icon" /t REG_SZ /d "%%SystemRoot%%\\System32\\bootux.dll,-1032" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\WindowsUpdate\shell\05AdvancedOptions\Command" /v "DelegateExecute" /t REG_SZ /d "{556FF0D6-A1EE-49E5-9FA4-90AE116AD744}" /f > nul
 
 echo]
 echo Run as administrator for: .msi files, .vbs files and .ps1 files
 :: Credit to Winaero Tweaker
-reg add "HKLM\Software\Classes\Microsoft.PowerShellScript.1\shell\runas" /v "HasLUAShield" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Microsoft.PowerShellScript.1\shell\runas\command" /ve /t REG_EXPAND_SZ /d "powershell.exe \"-Command\" \"if((Get-ExecutionPolicy ) -ne 'AllSigned') { Set-ExecutionPolicy -Scope Process Bypass }; & '%%1'\"" /f
-reg add "HKLM\Software\Classes\Msi.Package\shell\runas" /v "HasLUAShield" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Msi.Package\shell\runas\command" /ve /t REG_EXPAND_SZ /d "\"%%SystemRoot%%\System32\msiexec.exe\" /i \"%%1\" %%*" /f
-reg add "HKLM\Software\Classes\VBSFile\Shell\runas" /v "HasLUAShield" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\VBSFile\Shell\runas\command" /ve /t REG_EXPAND_SZ /d "\"%%SystemRoot%%\System32\WScript.exe\" \"%%1\" %%*" /f
+reg add "HKLM\Software\Classes\Microsoft.PowerShellScript.1\shell\runas" /v "HasLUAShield" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Microsoft.PowerShellScript.1\shell\runas\command" /ve /t REG_EXPAND_SZ /d "powershell.exe \"-Command\" \"if((Get-ExecutionPolicy ) -ne 'AllSigned') { Set-ExecutionPolicy -Scope Process Bypass }; ^& '%%1'\"" /f > nul
+reg add "HKLM\Software\Classes\Msi.Package\shell\runas" /v "HasLUAShield" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Msi.Package\shell\runas\command" /ve /t REG_EXPAND_SZ /d "\"%%SystemRoot%%\System32\msiexec.exe\" /i \"%%1\" %%*" /f > nul
+reg add "HKLM\Software\Classes\VBSFile\Shell\runas" /v "HasLUAShield" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\VBSFile\Shell\runas\command" /ve /t REG_EXPAND_SZ /d "\"%%SystemRoot%%\System32\WScript.exe\" \"%%1\" %%*" /f > nul
 
 echo]
 echo Remove 'Cast to Device' from context menu
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{7AD84985-87B4-4a16-BE58-8B72A5B390F7}" /t REG_SZ /d "" /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{7AD84985-87B4-4a16-BE58-8B72A5B390F7}" /t REG_SZ /d "" /f > nul
 
 echo]
 echo Remove BitLocker context menu entries
-reg add "HKLM\Software\Classes\Drive\shell\change-passphrase" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\change-pin" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\encrypt-bde" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\encrypt-bde-elev" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\manage-bde" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\resume-bde" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\resume-bde-elev" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\unlock-bde" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
+reg add "HKLM\Software\Classes\Drive\shell\change-passphrase" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\change-pin" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\encrypt-bde" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\encrypt-bde-elev" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\manage-bde" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\resume-bde" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\resume-bde-elev" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\unlock-bde" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
 
 echo]
 echo Remove 'Edit with Photos' from context menu
-reg add "HKCR\AppX43hnxtbyyps62jhe9sqpdzxn1790zetc\Shell\ShellEdit" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
+reg add "HKCR\AppX43hnxtbyyps62jhe9sqpdzxn1790zetc\Shell\ShellEdit" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
 
 echo]
 echo Remove 'Edit with Paint 3D' from context menu
-reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.bmp\Shell\3D Edit" /f
-reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.jpeg\Shell\3D Edit" /f
-reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.jpe\Shell\3D Edit" /f
-reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.jpg\Shell\3D Edit" /f
-reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.jpg\Shell\3D Edit" /f
-reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.png\Shell\3D Edit" /f
-reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.gif\Shell\3D Edit" /f
-reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.tif\Shell\3D Edit" /f
-reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.tiff\Shell\3D Edit" /f
+reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.bmp\Shell\3D Edit" /f > nul
+reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.jpeg\Shell\3D Edit" /f > nul
+reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.jpe\Shell\3D Edit" /f > nul
+reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.jpg\Shell\3D Edit" /f > nul
+reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.jpg\Shell\3D Edit" /f > nul
+reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.png\Shell\3D Edit" /f > nul
+reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.gif\Shell\3D Edit" /f > nul
+reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.tif\Shell\3D Edit" /f > nul
+reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.tiff\Shell\3D Edit" /f > nul
 
 echo]
 echo Remove 'Extract All' from context menu (use 7-Zip)
-reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{b8cdcb65-b1bf-4b42-9428-1dfdb7ee92af}" /t REG_SZ /d "" /f
+reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{b8cdcb65-b1bf-4b42-9428-1dfdb7ee92af}" /t REG_SZ /d "" /f > nul
 
 echo]
 echo Remove 'Burn disc image' from context menu
-reg add "HKLM\Software\Classes\Windows.IsoFile\shell\burn" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
+reg add "HKLM\Software\Classes\Windows.IsoFile\shell\burn" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
 
 echo]
 echo Remove 'Share with/Give Access To' from context menu
-reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{f81e9010-6ea4-11ce-a7ff-00aa003ca9f6}" /t REG_SZ /d "" /f
-reg add "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{f81e9010-6ea4-11ce-a7ff-00aa003ca9f6}" /t REG_SZ /d "" /f
+reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{f81e9010-6ea4-11ce-a7ff-00aa003ca9f6}" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{f81e9010-6ea4-11ce-a7ff-00aa003ca9f6}" /t REG_SZ /d "" /f > nul
 
 echo]
 echo Remove 'Share' from context menu
-reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{e2bf9676-5f8f-435c-97eb-11607a5bedf7}" /t REG_SZ /d "" /f
-reg add "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{e2bf9676-5f8f-435c-97eb-11607a5bedf7}" /t REG_SZ /d "" /f
+reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{e2bf9676-5f8f-435c-97eb-11607a5bedf7}" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{e2bf9676-5f8f-435c-97eb-11607a5bedf7}" /t REG_SZ /d "" /f > nul
 
 echo]
 echo Remove 'Restore Previous Versions' from context menu
-reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{596AB062-B4D2-4215-9F74-E9109B0A8153}" /t REG_SZ /d "" /f
-reg add "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{596AB062-B4D2-4215-9F74-E9109B0A8153}" /t REG_SZ /d "" /f
+reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{596AB062-B4D2-4215-9F74-E9109B0A8153}" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{596AB062-B4D2-4215-9F74-E9109B0A8153}" /t REG_SZ /d "" /f > nul
 
 echo]
 echo Remove 'Troubleshoot Compability' from context menu
-reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{1d27f844-3a1f-4410-85ac-14651078412d}" /t REG_SZ /d "" /f
-reg add "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{1d27f844-3a1f-4410-85ac-14651078412d}" /t REG_SZ /d "" /f
+reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{1d27f844-3a1f-4410-85ac-14651078412d}" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{1d27f844-3a1f-4410-85ac-14651078412d}" /t REG_SZ /d "" /f > nul
 
 echo]
 echo Remove 'Windows Media Player' from context menu
-reg add "HKLM\Software\Classes\SystemFileAssociations\audio\shell\Enqueue" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\audio\shell\Play" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\Directory.Audio\shell\Enqueue" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\Directory.Audio\shell\Play" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\Directory.Image\shell\Enqueue" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\Directory.Image\shell\Play" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{8A734961-C4AA-4741-AC1E-791ACEBF5B39}" /t REG_SZ /d "" /f
-reg add "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{8A734961-C4AA-4741-AC1E-791ACEBF5B39}" /t REG_SZ /d "" /f
+reg add "HKLM\Software\Classes\SystemFileAssociations\audio\shell\Enqueue" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\audio\shell\Play" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\Directory.Audio\shell\Enqueue" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\Directory.Audio\shell\Play" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\Directory.Image\shell\Enqueue" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\Directory.Image\shell\Play" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{8A734961-C4AA-4741-AC1E-791ACEBF5B39}" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Shell Extensions\Blocked" /v "{8A734961-C4AA-4741-AC1E-791ACEBF5B39}" /t REG_SZ /d "" /f > nul
 
 echo]
 echo Remove 'Include in library' from context menu
-reg delete "HKLM\Software\Classes\Folder\ShellEx\ContextMenuHandlers\Library Location" /f
+reg delete "HKLM\Software\Classes\Folder\ShellEx\ContextMenuHandlers\Library Location" /f > nul
 
 echo]
 echo Remove 'Rotate Left/Right' from context menu
-reg add "HKLM\Software\Classes\SystemFileAssociations\.bmp\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.bmp\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.dib\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.dib\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.gif\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.gif\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.heic\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.heic\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.heif\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.heif\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.ico\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.ico\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.jfif\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.jfif\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.jpe\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.jpe\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.jpeg\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.jpeg\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.jpg\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.jpg\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.png\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.png\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.rle\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.rle\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.tif\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.tif\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.tiff\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.tiff\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.webp\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\.webp\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f
+reg add "HKLM\Software\Classes\SystemFileAssociations\.bmp\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.bmp\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.dib\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.dib\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.gif\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.gif\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.heic\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.heic\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.heif\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.heif\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.ico\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.ico\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.jfif\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.jfif\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.jpe\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.jpe\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.jpeg\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.jpeg\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.jpg\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.jpg\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.png\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.png\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.rle\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.rle\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.tif\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.tif\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.tiff\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.tiff\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.webp\ShellEx\ContextMenuHandlers\ShellImagePreview" /ve /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\.webp\ShellEx\ContextMenuHandlers\ShellImagePreview" /v "CLSID_value" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f > nul
 
 echo]
 echo Remove 'File Ownership EFS' from context menu
-reg add "HKLM\Software\Classes\*\shell\UpdateEncryptionSettingsWork" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\shell\UpdateEncryptionSettings" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
+reg add "HKLM\Software\Classes\*\shell\UpdateEncryptionSettingsWork" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\UpdateEncryptionSettings" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
 
 echo]
 echo Remove 'Print' from context menu
-reg add "HKLM\Software\Classes\batfile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\cmdfile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\docxfile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\fonfile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\htmlfile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\InternetShortcut\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\JSEFile\Shell\Print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\pfmfile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\regfile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\rtffile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\SystemFileAssociations\image\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\ttffile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\VBEFile\Shell\Print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\VBSFile\Shell\Print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\WSFFile\Shell\Print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f
+reg add "HKLM\Software\Classes\batfile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\cmdfile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\docxfile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\fonfile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\htmlfile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\InternetShortcut\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\JSEFile\Shell\Print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\pfmfile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\regfile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\rtffile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\SystemFileAssociations\image\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\ttffile\shell\print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\VBEFile\Shell\Print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\VBSFile\Shell\Print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\WSFFile\Shell\Print" /v "ProgrammaticAccessOnly" /t REG_SZ /d "" /f > nul
 
 echo]
 echo Remove 'Bitmap Image' from the 'New' context menu
-reg delete "HKCR\.bmp\ShellNew" /f
+reg delete "HKCR\.bmp\ShellNew" /f > nul
 
 echo]
 echo Remove 'Rich Text Document' from 'New' context menu
-reg delete "HKCR\.rtf\ShellNew" /f
+reg delete "HKCR\.rtf\ShellNew" /f > nul
 
 echo]
 echo Remove 'Compressed zipped Folder' from 'New' context menu
-reg delete "HKCR\.zip\CompressedFolder\ShellNew" /f
+reg delete "HKCR\.zip\CompressedFolder\ShellNew" /f > nul
 
 echo]
 echo Remove 'Customise this Folder' from context menu
-%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoCustomizeThisFolder" /t REG_DWORD /d "1" /f
+%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoCustomizeThisFolder" /t REG_DWORD /d "1" /f > nul
 
 echo]
 echo Add PowerShell as admin to extended context menu
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenPSAdmin" /ve /t REG_SZ /d "PowerShell (Admin)" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenPSAdmin" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenPSAdmin" /v "HasLUAShield" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenPSAdmin" /v "Icon" /t REG_SZ /d "powershell.exe" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenPSAdmin\command" /ve /t REG_SZ /d "powershell -WindowStyle Hidden -NoProfile -Command \"Start-Process -Verb RunAs powershell.exe -ArgumentList \\\"-NoExit -Command Push-Location \\\\\\\"\\\"%%V/\\\\\\\"\\\"\\\"" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenPSAdmin" /ve /t REG_SZ /d "PowerShell (Admin)" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenPSAdmin" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenPSAdmin" /v "HasLUAShield" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenPSAdmin" /v "Icon" /t REG_SZ /d "powershell.exe" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenPSAdmin\command" /ve /t REG_SZ /d "powershell -WindowStyle Hidden -NoProfile -Command \"Start-Process -Verb RunAs powershell.exe -ArgumentList \\\"-NoExit -Command Push-Location \\\\\\\"\\\"%%V/\\\\\\\"\\\"\\\"" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenPSAdmin" /ve /t REG_SZ /d "PowerShell (Admin)" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenPSAdmin" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenPSAdmin" /v "HasLUAShield" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenPSAdmin" /v "Icon" /t REG_SZ /d "powershell.exe" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenPSAdmin\command" /ve /t REG_SZ /d "powershell -WindowStyle Hidden -NoProfile -Command \"Start-Process -Verb RunAs powershell.exe -ArgumentList \\\"-NoExit -Command Push-Location \\\\\\\"\\\"%%V/\\\\\\\"\\\"\\\"" /f
-reg add "HKLM\Software\Classes\LibraryFolder\shell\OpenPSAdmin" /ve /t REG_SZ /d "PowerShell (Admin)" /f
-reg add "HKLM\Software\Classes\LibraryFolder\shell\OpenPSAdmin" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\LibraryFolder\shell\OpenPSAdmin" /v "HasLUAShield" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\LibraryFolder\shell\OpenPSAdmin" /v "Icon" /t REG_SZ /d "powershell.exe" /f
-reg add "HKLM\Software\Classes\LibraryFolder\shell\OpenPSAdmin\command" /ve /t REG_SZ /d "powershell -WindowStyle Hidden -NoProfile -Command \"Start-Process -Verb RunAs powershell.exe -ArgumentList \\\"-NoExit -Command Push-Location \\\\\\\"\\\"%%V/\\\\\\\"\\\"\\\"" /f
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenPSAdmin" /ve /t REG_SZ /d "PowerShell (Admin)" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenPSAdmin" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenPSAdmin" /v "HasLUAShield" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenPSAdmin" /v "Icon" /t REG_SZ /d "powershell.exe" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenPSAdmin\command" /ve /t REG_SZ /d "powershell -WindowStyle Hidden -NoProfile -Command \"Start-Process -Verb RunAs powershell.exe -ArgumentList \\\"-NoExit -Command Push-Location \\\\\\\"\\\"%%V/\\\\\\\"\\\"\\\"" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenPSAdmin" /ve /t REG_SZ /d "PowerShell (Admin)" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenPSAdmin" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenPSAdmin" /v "HasLUAShield" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenPSAdmin" /v "Icon" /t REG_SZ /d "powershell.exe" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenPSAdmin\command" /ve /t REG_SZ /d "powershell -WindowStyle Hidden -NoProfile -Command \"Start-Process -Verb RunAs powershell.exe -ArgumentList \\\"-NoExit -Command Push-Location \\\\\\\"\\\"%%V/\\\\\\\"\\\"\\\"" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenPSAdmin" /ve /t REG_SZ /d "PowerShell (Admin)" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenPSAdmin" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenPSAdmin" /v "HasLUAShield" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenPSAdmin" /v "Icon" /t REG_SZ /d "powershell.exe" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenPSAdmin\command" /ve /t REG_SZ /d "powershell -WindowStyle Hidden -NoProfile -Command \"Start-Process -Verb RunAs powershell.exe -ArgumentList \\\"-NoExit -Command Push-Location \\\\\\\"\\\"%%V/\\\\\\\"\\\"\\\"" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\shell\OpenPSAdmin" /ve /t REG_SZ /d "PowerShell (Admin)" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\shell\OpenPSAdmin" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\shell\OpenPSAdmin" /v "HasLUAShield" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\shell\OpenPSAdmin" /v "Icon" /t REG_SZ /d "powershell.exe" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\shell\OpenPSAdmin\command" /ve /t REG_SZ /d "powershell -WindowStyle Hidden -NoProfile -Command \"Start-Process -Verb RunAs powershell.exe -ArgumentList \\\"-NoExit -Command Push-Location \\\\\\\"\\\"%%V/\\\\\\\"\\\"\\\"" /f > nul
 
 echo]
 echo Add PowerShell to the extended context menu
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenPS" /v "NoWorkingDirectory" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenPS" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenPS" /v "NeverDefault" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenPS" /v "Icon" /t REG_SZ /d "PowerShell.exe" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenPS" /ve /t REG_SZ /d "PowerShell" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenPS\command" /ve /t REG_SZ /d "powershell.exe -noexit -command Set-Location -literalPath '%%V'" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenPS" /v "NoWorkingDirectory" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenPS" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenPS" /v "Icon" /t REG_SZ /d "PowerShell.exe" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenPS" /v "NeverDefault" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenPS" /ve /t REG_SZ /d "PowerShell" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenPS\command" /ve /t REG_SZ /d "powershell.exe -noexit -command Set-Location -literalPath '%%V'" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenPS" /ve /t REG_SZ /d "PowerShell" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenPS" /v "NoWorkingDirectory" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenPS" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenPS" /v "NeverDefault" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenPS" /v "Icon" /t REG_SZ /d "PowerShell.exe" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenPS\command" /ve /t REG_SZ /d "powershell.exe -noexit -command Set-Location -literalPath '%%V'" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenPS" /v "NoWorkingDirectory" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenPS" /v "NeverDefault" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenPS" /v "Icon" /t REG_SZ /d "PowerShell.exe" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenPS" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenPS" /ve /t REG_SZ /d "PowerShell" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenPS\command" /ve /t REG_SZ /d "powershell.exe -noexit -command Set-Location -literalPath '%%V'" /f
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenPS" /v "NoWorkingDirectory" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenPS" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenPS" /v "NeverDefault" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenPS" /v "Icon" /t REG_SZ /d "PowerShell.exe" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenPS" /ve /t REG_SZ /d "PowerShell" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenPS\command" /ve /t REG_SZ /d "powershell.exe -noexit -command Set-Location -literalPath '%%V'" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenPS" /v "NoWorkingDirectory" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenPS" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenPS" /v "Icon" /t REG_SZ /d "PowerShell.exe" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenPS" /v "NeverDefault" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenPS" /ve /t REG_SZ /d "PowerShell" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenPS\command" /ve /t REG_SZ /d "powershell.exe -noexit -command Set-Location -literalPath '%%V'" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenPS" /ve /t REG_SZ /d "PowerShell" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenPS" /v "NoWorkingDirectory" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenPS" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenPS" /v "NeverDefault" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenPS" /v "Icon" /t REG_SZ /d "PowerShell.exe" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenPS\command" /ve /t REG_SZ /d "powershell.exe -noexit -command Set-Location -literalPath '%%V'" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenPS" /v "NoWorkingDirectory" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenPS" /v "NeverDefault" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenPS" /v "Icon" /t REG_SZ /d "PowerShell.exe" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenPS" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenPS" /ve /t REG_SZ /d "PowerShell" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenPS\command" /ve /t REG_SZ /d "powershell.exe -noexit -command Set-Location -literalPath '%%V'" /f > nul
 
 echo]
 echo Add Command Prompt as admin to the extended context menu
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenElevatedCmd" /v "Icon" /t REG_SZ /d "cmd.exe" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenElevatedCmd" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenElevatedCmd" /v "NoWorkingDirectory" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenElevatedCmd" /ve /t REG_SZ /d "Command Prompt (Admin)" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenElevatedCmd" /v "NeverDefault" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\OpenElevatedCmd\command" /ve /t REG_SZ /d "PowerShell.exe -windowstyle hidden -Command \"Start-Process cmd.exe -ArgumentList '/s,/k,pushd,%%V' -Verb RunAs\"" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenElevatedCmd" /v "NoWorkingDirectory" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenElevatedCmd" /ve /t REG_SZ /d "Command Prompt (Admin)" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenElevatedCmd" /v "Icon" /t REG_SZ /d "cmd.exe" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenElevatedCmd" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenElevatedCmd" /v "NeverDefault" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\shell\OpenElevatedCmd\command" /ve /t REG_SZ /d "PowerShell.exe -windowstyle hidden -Command \"Start-Process cmd.exe -ArgumentList '/s,/k,pushd,%%V' -Verb RunAs\"" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenElevatedCmd" /v "NoWorkingDirectory" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenElevatedCmd" /v "NeverDefault" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenElevatedCmd" /v "Icon" /t REG_SZ /d "cmd.exe" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenElevatedCmd" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenElevatedCmd" /ve /t REG_SZ /d "Command Prompt (Admin)" /f
-reg add "HKLM\Software\Classes\Drive\shell\OpenElevatedCmd\command" /ve /t REG_SZ /d "PowerShell.exe -windowstyle hidden -Command \"Start-Process cmd.exe -ArgumentList '/s,/k,pushd,%%V' -Verb RunAs\"" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenElevatedCmd" /v "NeverDefault" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenElevatedCmd" /v "Icon" /t REG_SZ /d "cmd.exe" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenElevatedCmd" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenElevatedCmd" /v "NoWorkingDirectory" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenElevatedCmd" /ve /t REG_SZ /d "Command Prompt (Admin)" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenElevatedCmd\command" /ve /t REG_SZ /d "PowerShell.exe -windowstyle hidden -Command \"Start-Process cmd.exe -ArgumentList '/s,/k,pushd,%%V' -Verb RunAs\"" /f
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenElevatedCmd" /v "Icon" /t REG_SZ /d "cmd.exe" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenElevatedCmd" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenElevatedCmd" /v "NoWorkingDirectory" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenElevatedCmd" /ve /t REG_SZ /d "Command Prompt (Admin)" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenElevatedCmd" /v "NeverDefault" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\OpenElevatedCmd\command" /ve /t REG_SZ /d "PowerShell.exe -windowstyle hidden -Command \"Start-Process cmd.exe -ArgumentList '/s,/k,pushd,%%V' -Verb RunAs\"" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenElevatedCmd" /v "NoWorkingDirectory" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenElevatedCmd" /ve /t REG_SZ /d "Command Prompt (Admin)" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenElevatedCmd" /v "Icon" /t REG_SZ /d "cmd.exe" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenElevatedCmd" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenElevatedCmd" /v "NeverDefault" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\OpenElevatedCmd\command" /ve /t REG_SZ /d "PowerShell.exe -windowstyle hidden -Command \"Start-Process cmd.exe -ArgumentList '/s,/k,pushd,%%V' -Verb RunAs\"" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenElevatedCmd" /v "NoWorkingDirectory" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenElevatedCmd" /v "NeverDefault" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenElevatedCmd" /v "Icon" /t REG_SZ /d "cmd.exe" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenElevatedCmd" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenElevatedCmd" /ve /t REG_SZ /d "Command Prompt (Admin)" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\OpenElevatedCmd\command" /ve /t REG_SZ /d "PowerShell.exe -windowstyle hidden -Command \"Start-Process cmd.exe -ArgumentList '/s,/k,pushd,%%V' -Verb RunAs\"" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenElevatedCmd" /v "NeverDefault" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenElevatedCmd" /v "Icon" /t REG_SZ /d "cmd.exe" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenElevatedCmd" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenElevatedCmd" /v "NoWorkingDirectory" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenElevatedCmd" /ve /t REG_SZ /d "Command Prompt (Admin)" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\OpenElevatedCmd\command" /ve /t REG_SZ /d "PowerShell.exe -windowstyle hidden -Command \"Start-Process cmd.exe -ArgumentList '/s,/k,pushd,%%V' -Verb RunAs\"" /f > nul
 
 echo]
 echo Add Command Prompt to the extended context menu
-reg add "HKLM\Software\Classes\Directory\background\shell\cmd2" /v "Icon" /t REG_SZ /d "cmd.exe" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\cmd2" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\cmd2" /v "NoWorkingDirectory" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\cmd2" /ve /t REG_SZ /d "Command Prompt" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\cmd2" /v "NeverDefault" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\background\shell\cmd2\command" /ve /t REG_SZ /d "cmd.exe /s /k pushd \"%%V\"" /f
-reg add "HKLM\Software\Classes\Directory\shell\cmd2" /v "NeverDefault" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\shell\cmd2" /v "Icon" /t REG_SZ /d "cmd.exe" /f
-reg add "HKLM\Software\Classes\Directory\shell\cmd2" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\shell\cmd2" /v "NoWorkingDirectory" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Directory\shell\cmd2" /ve /t REG_SZ /d "Command Prompt" /f
-reg add "HKLM\Software\Classes\Directory\shell\cmd2\command" /ve /t REG_SZ /d "cmd.exe /s /k pushd \"%%V\"" /f
-reg add "HKLM\Software\Classes\Drive\shell\cmd2" /v "NeverDefault" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\cmd2" /v "Icon" /t REG_SZ /d "cmd.exe" /f
-reg add "HKLM\Software\Classes\Drive\shell\cmd2" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\cmd2" /v "NoWorkingDirectory" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\Drive\shell\cmd2" /ve /t REG_SZ /d "Command Prompt" /f
-reg add "HKLM\Software\Classes\Drive\shell\cmd2\command" /ve /t REG_SZ /d "cmd.exe /s /k pushd \"%%V\"" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\cmd2" /v "NeverDefault" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\cmd2" /v "NoWorkingDirectory" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\cmd2" /v "Extended" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\cmd2" /v "Icon" /t REG_SZ /d "cmd.exe" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\cmd2" /ve /t REG_SZ /d "Command Prompt" /f
-reg add "HKLM\Software\Classes\LibraryFolder\Shell\cmd2\command" /ve /t REG_SZ /d "cmd.exe /s /k pushd \"%%V\"" /f
+reg add "HKLM\Software\Classes\Directory\background\shell\cmd2" /v "Icon" /t REG_SZ /d "cmd.exe" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\cmd2" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\cmd2" /v "NoWorkingDirectory" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\cmd2" /ve /t REG_SZ /d "Command Prompt" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\cmd2" /v "NeverDefault" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\background\shell\cmd2\command" /ve /t REG_SZ /d "cmd.exe /s /k pushd \"%%V\"" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\cmd2" /v "NeverDefault" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\cmd2" /v "Icon" /t REG_SZ /d "cmd.exe" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\cmd2" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\cmd2" /v "NoWorkingDirectory" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\cmd2" /ve /t REG_SZ /d "Command Prompt" /f > nul
+reg add "HKLM\Software\Classes\Directory\shell\cmd2\command" /ve /t REG_SZ /d "cmd.exe /s /k pushd \"%%V\"" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\cmd2" /v "NeverDefault" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\cmd2" /v "Icon" /t REG_SZ /d "cmd.exe" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\cmd2" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\cmd2" /v "NoWorkingDirectory" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\cmd2" /ve /t REG_SZ /d "Command Prompt" /f > nul
+reg add "HKLM\Software\Classes\Drive\shell\cmd2\command" /ve /t REG_SZ /d "cmd.exe /s /k pushd \"%%V\"" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\cmd2" /v "NeverDefault" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\cmd2" /v "NoWorkingDirectory" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\cmd2" /v "Extended" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\cmd2" /v "Icon" /t REG_SZ /d "cmd.exe" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\cmd2" /ve /t REG_SZ /d "Command Prompt" /f > nul
+reg add "HKLM\Software\Classes\LibraryFolder\Shell\cmd2\command" /ve /t REG_SZ /d "cmd.exe /s /k pushd \"%%V\"" /f > nul
 
 echo]
 echo Add .bat, .cmd, .reg and .ps1 to the 'New' context menu
-reg add "HKLM\Software\Classes\.bat\ShellNew" /v "ItemName" /t REG_EXPAND_SZ /d "@C:\WINDOWS\System32\acppage.dll,-6002" /f
-reg add "HKLM\Software\Classes\.bat\ShellNew" /v "NullFile" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\.cmd\ShellNew" /v "NullFile" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\.cmd\ShellNew" /v "ItemName" /t REG_EXPAND_SZ /d "@C:\WINDOWS\System32\acppage.dll,-6003" /f
-reg add "HKLM\Software\Classes\.ps1\ShellNew" /v "NullFile" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\.ps1\ShellNew" /v "ItemName" /t REG_EXPAND_SZ /d "New file" /f
-reg add "HKLM\Software\Classes\.reg\ShellNew" /v "NullFile" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\.reg\ShellNew" /v "ItemName" /t REG_EXPAND_SZ /d "@C:\WINDOWS\regedit.exe,-309" /f
+reg add "HKLM\Software\Classes\.bat\ShellNew" /v "ItemName" /t REG_EXPAND_SZ /d "@C:\WINDOWS\System32\acppage.dll,-6002" /f > nul
+reg add "HKLM\Software\Classes\.bat\ShellNew" /v "NullFile" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\.cmd\ShellNew" /v "NullFile" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\.cmd\ShellNew" /v "ItemName" /t REG_EXPAND_SZ /d "@C:\WINDOWS\System32\acppage.dll,-6003" /f > nul
+reg add "HKLM\Software\Classes\.ps1\ShellNew" /v "NullFile" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\.ps1\ShellNew" /v "ItemName" /t REG_EXPAND_SZ /d "New file" /f > nul
+reg add "HKLM\Software\Classes\.reg\ShellNew" /v "NullFile" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\.reg\ShellNew" /v "ItemName" /t REG_EXPAND_SZ /d "@C:\WINDOWS\regedit.exe,-309" /f > nul
 
 echo]
 echo Set chkdsk timeout on boot to 50 seconds to avoid unwanted scanning
-reg add "HKLM\System\ControlSet001\Control\Session Manager" /v "AutoChkTimeout" /t REG_DWORD /d "50" /f
+reg add "HKLM\System\ControlSet001\Control\Session Manager" /v "AutoChkTimeout" /t REG_DWORD /d "50" /f > nul
 
 echo]
 echo Show removable drivers only in 'This PC' on the Windows Explorer sidebar
-reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\DelegateFolders\{F5FB2C77-0E2F-4A16-A381-3E560C68BC83}" /f
-reg delete "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\DelegateFolders\{F5FB2C77-0E2F-4A16-A381-3E560C68BC83}\{F5FB2C77-0E2F-4A16-A381-3E560C68BC83}" /f
+reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\DelegateFolders\{F5FB2C77-0E2F-4A16-A381-3E560C68BC83}" /f > nul
+reg delete "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\DelegateFolders\{F5FB2C77-0E2F-4A16-A381-3E560C68BC83}\{F5FB2C77-0E2F-4A16-A381-3E560C68BC83}" /f > nul
 
 echo]
 echo Remove 'Network' from the Windows Explorer sidebar
-%currentuser% reg add "HKCU\Software\Classes\CLSID\{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}" /v "System.IsPinnedToNameSpaceTree" /t REG_DWORD /d "0" /f
-%currentuser% reg add "HKCU\Software\Classes\WOW6432Node\CLSID\{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}" /v "System.IsPinnedToNameSpaceTree" /t REG_DWORD /d "0" /f
+%currentuser% reg add "HKCU\Software\Classes\CLSID\{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}" /v "System.IsPinnedToNameSpaceTree" /t REG_DWORD /d "0" /f > nul
+%currentuser% reg add "HKCU\Software\Classes\WOW6432Node\CLSID\{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}" /v "System.IsPinnedToNameSpaceTree" /t REG_DWORD /d "0" /f > nul
 
 echo]
 echo Remove 'Libraries' from the Windows Explorer sidebar
-%currentuser% reg add "HKCU\Software\Classes\CLSID\{031E4825-7B94-4dc3-B131-E946B44C8DD5}" /v "System.IsPinnedToNameSpaceTree" /t REG_DWORD /d "0" /f
-%currentuser% reg add "HKCU\Software\Classes\WOW6432Node\CLSID\{031E4825-7B94-4dc3-B131-E946B44C8DD5}" /v "System.IsPinnedToNameSpaceTree" /t REG_DWORD /d "0" /f
+%currentuser% reg add "HKCU\Software\Classes\CLSID\{031E4825-7B94-4dc3-B131-E946B44C8DD5}" /v "System.IsPinnedToNameSpaceTree" /t REG_DWORD /d "0" /f > nul
+%currentuser% reg add "HKCU\Software\Classes\WOW6432Node\CLSID\{031E4825-7B94-4dc3-B131-E946B44C8DD5}" /v "System.IsPinnedToNameSpaceTree" /t REG_DWORD /d "0" /f > nul
 
 echo] 
 echo Add classic personalisation back to the Control Panel
-reg add "HKLM\Software\Classes\CLSID\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}" /v "InfoTip" /t REG_SZ /d "@%%SystemRoot%%\System32\themecpl.dll,-2#immutable1" /f
-reg add "HKLM\Software\Classes\CLSID\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}" /v "System.ApplicationName" /t REG_SZ /d "Microsoft.Personalization" /f
-reg add "HKLM\Software\Classes\CLSID\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}" /v "System.ControlPanel.Category" /t REG_DWORD /d "1" /f
-reg add "HKLM\Software\Classes\CLSID\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}" /v "System.Software.TasksFileUrl" /t REG_SZ /d "Internal" /f
-reg add "HKLM\Software\Classes\CLSID\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}" /ve /t REG_SZ /d "Personalisation (Classic)" /f
-reg add "HKLM\Software\Classes\CLSID\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}\DefaultIcon" /ve /t REG_SZ /d "%%SystemRoot%%\System32\themecpl.dll,-1" /f
-reg add "HKLM\Software\Classes\CLSID\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}\Shell\Open\Command" /ve /t REG_SZ /d "explorer.exe shell:::{ED834ED6-4B5A-4bfe-8F11-A626DCB6A921}" /f
-reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\ControlPanel\NameSpace\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}" /ve /t REG_SZ /d "Personalization" /f
+reg add "HKLM\Software\Classes\CLSID\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}" /v "InfoTip" /t REG_SZ /d "@%%SystemRoot%%\System32\themecpl.dll,-2#immutable1" /f > nul
+reg add "HKLM\Software\Classes\CLSID\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}" /v "System.ApplicationName" /t REG_SZ /d "Microsoft.Personalization" /f > nul
+reg add "HKLM\Software\Classes\CLSID\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}" /v "System.ControlPanel.Category" /t REG_DWORD /d "1" /f > nul
+reg add "HKLM\Software\Classes\CLSID\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}" /v "System.Software.TasksFileUrl" /t REG_SZ /d "Internal" /f > nul
+reg add "HKLM\Software\Classes\CLSID\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}" /ve /t REG_SZ /d "Personalisation (Classic)" /f > nul
+reg add "HKLM\Software\Classes\CLSID\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}\DefaultIcon" /ve /t REG_SZ /d "%%SystemRoot%%\System32\themecpl.dll,-1" /f > nul
+reg add "HKLM\Software\Classes\CLSID\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}\Shell\Open\Command" /ve /t REG_SZ /d "explorer.exe shell:::{ED834ED6-4B5A-4bfe-8F11-A626DCB6A921}" /f > nul
+reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\ControlPanel\NameSpace\{580722FF-16A7-44C1-BF74-7E1ACD00F4F9}" /ve /t REG_SZ /d "Personalization" /f > nul
 
 echo]
 echo Disable automatic maintenence
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled " /t REG_DWORD /d "1" /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled " /t REG_DWORD /d "1" /f > nul
 
 echo]
 echo Safe mode desktop context menu
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode" /v "Icon" /t REG_SZ /d "shell32.dll,77" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode" /v "Position" /t REG_SZ /d "Bottom" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode" /v "SubCommands" /t REG_SZ /d "" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode" /v "MUIVerb" /t REG_SZ /d "Safe Mode" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\01SafeMode" /v "MUIVerb" /t REG_SZ /d "Safe Mode" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\01SafeMode\Command" /ve /t REG_SZ /d "cmd.exe /c \"C:\Users\Public\Desktop\gooseISO\Troubleshooting\Safe Mode\Safe Mode.bat\"" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\02SafeModeNet" /v "MUIVerb" /t REG_SZ /d "Safe Mode with Networking" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\02SafeModeNet\Command" /ve /t REG_SZ /d "cmd.exe /c \"C:\Users\Public\Desktop\gooseISO\Troubleshooting\Safe Mode\Safe Mode with Networking.bat\"" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\03SafeModeCmd" /v "MUIVerb" /t REG_SZ /d "Safe Mode with Command Prompt" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\03SafeModeCmd\Command" /ve /t REG_SZ /d "cmd.exe /c \"C:\Users\Public\Desktop\gooseISO\Troubleshooting\Safe Mode\Safe Mode with Command Prompt.bat\"" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\04SafeModeNormal" /v "MUIVerb" /t REG_SZ /d "Exit Safe Mode" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\04SafeModeNormal" /v "CommandFlags" /t REG_DWORD /d "32" /f
-reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\04SafeModeNormal\Command" /ve /t REG_SZ /d "cmd.exe /c \"C:\Users\Public\Desktop\gooseISO\Troubleshooting\Safe Mode\Exit Safe Mode.bat\"" /f
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode" /v "Icon" /t REG_SZ /d "shell32.dll,77" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode" /v "Position" /t REG_SZ /d "Bottom" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode" /v "SubCommands" /t REG_SZ /d "" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode" /v "MUIVerb" /t REG_SZ /d "Safe Mode" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\01SafeMode" /v "MUIVerb" /t REG_SZ /d "Safe Mode" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\01SafeMode\Command" /ve /t REG_SZ /d "cmd.exe /c \"C:\Users\Public\Desktop\gooseISO\Troubleshooting\Safe Mode\Safe Mode.bat\"" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\02SafeModeNet" /v "MUIVerb" /t REG_SZ /d "Safe Mode with Networking" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\02SafeModeNet\Command" /ve /t REG_SZ /d "cmd.exe /c \"C:\Users\Public\Desktop\gooseISO\Troubleshooting\Safe Mode\Safe Mode with Networking.bat\"" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\03SafeModeCmd" /v "MUIVerb" /t REG_SZ /d "Safe Mode with Command Prompt" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\03SafeModeCmd\Command" /ve /t REG_SZ /d "cmd.exe /c \"C:\Users\Public\Desktop\gooseISO\Troubleshooting\Safe Mode\Safe Mode with Command Prompt.bat\"" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\04SafeModeNormal" /v "MUIVerb" /t REG_SZ /d "Exit Safe Mode" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\04SafeModeNormal" /v "CommandFlags" /t REG_DWORD /d "32" /f > nul
+reg add "HKLM\Software\Classes\DesktopBackground\Shell\SafeMode\shell\04SafeModeNormal\Command" /ve /t REG_SZ /d "cmd.exe /c \"C:\Users\Public\Desktop\gooseISO\Troubleshooting\Safe Mode\Exit Safe Mode.bat\"" /f > nul
 
 echo]
 echo Show seconds in taskbar clock
-%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowSecondsInSystemClock" /t REG_DWORD /d "1" /f
+%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowSecondsInSystemClock" /t REG_DWORD /d "1" /f > nul
 
 echo]
 echo Disable search box suggestions/history
-%currentuser% reg add "HKCU\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d "1" /f
+%currentuser% reg add "HKCU\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d "1" /f > nul
 
 echo]
 echo Disable tooptips in File Explorer
-%currentuser% reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowInfoTip" /t REG_DWORD /d "0" /f
+%currentuser% reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowInfoTip" /t REG_DWORD /d "0" /f > nul
 
 echo]
 echo Disable advertisements via Bluetooth
-reg add "HKLM\Software\Microsoft\PolicyManager\current\device\Bluetooth" /v "AllowAdvertising" /t REG_DWORD /d "0" /f
+reg add "HKLM\Software\Microsoft\PolicyManager\current\device\Bluetooth" /v "AllowAdvertising" /t REG_DWORD /d "0" /f > nul
 
 echo]
 echo Disable syncing text messages
-reg add "HKLM\Software\Policies\Microsoft\Windows\Messaging" /v "AllowMessageSync" /t REG_DWORD /d "0" /f
+reg add "HKLM\Software\Policies\Microsoft\Windows\Messaging" /v "AllowMessageSync" /t REG_DWORD /d "0" /f > nul
 
 echo]
 echo Disable text suggestions when typing on the software keyboard
-%currentuser% reg add "HKCU\Software\Microsoft\TabletTip\1.7" /v "EnableTextPrediction" /t REG_DWORD /d "0" /f
+%currentuser% reg add "HKCU\Software\Microsoft\TabletTip\1.7" /v "EnableTextPrediction" /t REG_DWORD /d "0" /f > nul
 
 echo]
 echo Disable the transfer of the clipboard to other devices via the internet
-reg add "HKLM\Software\Policies\Microsoft\Windows\System" /v "AllowCrossDeviceClipboard" /t REG_DWORD /d "0" /f
+reg add "HKLM\Software\Policies\Microsoft\Windows\System" /v "AllowCrossDeviceClipboard" /t REG_DWORD /d "0" /f > nul
 
 echo]
 echo Disable 'Meet Now' (current user)
-%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "HideSCAMeetNow" /t REG_DWORD /d "1" /f
+%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "HideSCAMeetNow" /t REG_DWORD /d "1" /f > nul
 
 echo]
 echo Disable notifications on the lockscreen
-%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings" /v "NOC_GLOBAL_SETTING_ALLOW_TOASTS_ABOVE_LOCK" /t REG_DWORD /d "0" /f
+%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings" /v "NOC_GLOBAL_SETTING_ALLOW_TOASTS_ABOVE_LOCK" /t REG_DWORD /d "0" /f > nul
 
 echo]
 echo Disable downloading of OneSettings config settings
-reg add "HKLM\Software\Policies\Microsoft\Windows\DataCollection" /v "DisableOneSettingsDownloads" /t REG_DWORD /d "1" /f
+reg add "HKLM\Software\Policies\Microsoft\Windows\DataCollection" /v "DisableOneSettingsDownloads" /t REG_DWORD /d "1" /f > nul
 
 echo]
 echo Disable diagnostic log collection
-reg add "HKLM\Software\Policies\Microsoft\Windows\DataCollection" /v "LimitDiagnosticLogCollection" /t REG_DWORD /d "1" /f
+reg add "HKLM\Software\Policies\Microsoft\Windows\DataCollection" /v "LimitDiagnosticLogCollection" /t REG_DWORD /d "1" /f > nul
 
 echo]
 echo Disable language settings sync
-%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Language" /v "Enabled" /t REG_DWORD /d "0" /f
+%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Language" /v "Enabled" /t REG_DWORD /d "0" /f > nul
 
 echo]
 echo App permissions
-%currentuser% reg add "HKCU\Software\Microsoft\Speech_OneCore\Settings\VoiceActivation\UserPreferenceForAllApps" /v "AgentActivationOnLockScreenEnabled" /t REG_DWORD /d "0" /f
-%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appDiagnostics" /v "Value" /t REG_SZ /d "Deny" /f
-%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userAccountInformation" /v "Value" /t REG_SZ /d "Deny" /f
-%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Start_TrackProgs" /t REG_DWORD /d "0" /f
-reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appDiagnostics" /v "Value" /t REG_SZ /d "Deny" /f
-reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userAccountInformation" /v "Value" /t REG_SZ /d "Deny" /f
+%currentuser% reg add "HKCU\Software\Microsoft\Speech_OneCore\Settings\VoiceActivation\UserPreferenceForAllApps" /v "AgentActivationOnLockScreenEnabled" /t REG_DWORD /d "0" /f > nul
+%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appDiagnostics" /v "Value" /t REG_SZ /d "Deny" /f > nul
+%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userAccountInformation" /v "Value" /t REG_SZ /d "Deny" /f > nul
+%currentuser% reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Start_TrackProgs" /t REG_DWORD /d "0" /f > nul
+reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appDiagnostics" /v "Value" /t REG_SZ /d "Deny" /f > nul
+reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userAccountInformation" /v "Value" /t REG_SZ /d "Deny" /f > nul
 
 :defender-POST
 :: Disable Defender, already disabled but not completely
-if %postinstall%==1 %currentuser% C:\Windows\gooseModules\goose-config.bat /defenderDPost /skipElevationCheck
+if %postinstall%==1 (
+	%currentuser% C:\Windows\gooseModules\goose-config.bat /defenderDPost /skipElevationCheck
+	goto tweaksfinish
+)
 choice /c:yn /n /m "Would you like to disable Defender? [Y/N]"
 if %errorlevel%==1 %currentuser% C:\Windows\gooseModules\goose-config.bat /defenderDPost /skipElevationCheck
 if %errorlevel%==2 goto tweaksfinish
@@ -3197,9 +3190,9 @@ goto finishNRB
 :vcreR
 echo Opening Visual C++ Runtimes installer...
 vcredist.exe /ai
-echo Installation finished or cancelled.
+echo Installation done.
 if %ERRORLEVEL%==0 echo %date% - %time% Visual C++ Runtimes installed...>> C:\Windows\GooseModules\logs\userScript.log
-if %settweaks%==0 (goto finishNRB) else (goto exit /b)
+if %settweaks%==0 (goto finishNRB) else (exit /b)
 
 :uacD
 echo Disabling UAC breaks fullscreen on certain UWP applications, one of them being Minecraft Windows 10 Edition. It is also less secure to disable UAC.
@@ -3554,11 +3547,11 @@ powershell -NoProfile -Command "Disable-NetAdapterBinding -Name "*" -ComponentID
 
 echo]
 echo Disable LMHOSTS
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\NetBT\Parameters" /v "EnableLMHOSTS" /t REG_DWORD /d "0" /f
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\NetBT\Parameters" /v "EnableLMHOSTS" /t REG_DWORD /d "0" /f > nul
 
 if %ERRORLEVEL%==0 (echo %date% - %time% Network Optimized...>> C:\Windows\GooseModules\logs\install.log
 ) ELSE (echo %date% - %time% Failed to Optimize Network! >> C:\Windows\GooseModules\logs\install.log)
-if %settweaks%==1 (goto exit /b) else (goto finish)
+if %settweaks%==1 (exit /b) else (goto finish)
 
 :debugProfile
 systeminfo > C:\Windows\GooseModules\logs\systemInfo.log

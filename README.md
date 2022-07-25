@@ -1,3 +1,5 @@
+# [gooseISO has been merged into duckISO](https://github.com/duckISO/duckISO/) ⬅️
+
 <h1 align="center">
   <a href="https://github.com/he3als/gooseISO/"><img src="https://github.com/he3als/gooseISO/raw/main/img/banner.png" alt="gooseISO Banner" width="900"></a>
   <br>gooseISO 🦆<br>
